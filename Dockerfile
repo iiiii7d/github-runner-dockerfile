@@ -1,17 +1,18 @@
-FROM ubuntu:20.04
+FROM ubuntu:26.04
 
-ARG RUNNER_VERSION="2.294.0"
+ARG RUNNER_VERSION="2.337.0"
 
 # Prevents installdependencies.sh from prompting the user and blocking the image creation
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt update -y && apt upgrade -y && useradd -m docker
-RUN apt install -y --no-install-recommends \
-    curl jq build-essential libssl-dev libffi-dev python3 python3-venv python3-dev python3-pip
+RUN useradd -m docker
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    curl git sudo jq build-essential libssl-dev libffi-dev python3 python3-venv python3-dev python3-pip \
+    && rm -rf /var/lib/apt/lists
 
+WORKDIR /home/docker/actions-runner
 
-RUN cd /home/docker && mkdir actions-runner && cd actions-runner \
-    && curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
+RUN curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
     && tar xzf ./actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz
 
 RUN chown -R docker ~docker && /home/docker/actions-runner/bin/installdependencies.sh
@@ -25,4 +26,4 @@ RUN chmod +x start.sh
 # set the user to "docker" so all subsequent commands are run as the docker user
 USER docker
 
-ENTRYPOINT ["./start.sh"]
+ENTRYPOINT ["/home/docker/actions-runner/start.sh"]
