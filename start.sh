@@ -1,4 +1,7 @@
 #!/bin/bash
+set -euxo pipefail
+
+./config.sh --help
 
 echo "ORGANISATION ${ORGANISATION}"
 echo "ACCESS_TOKEN ${ACCESS_TOKEN}"
