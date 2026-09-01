@@ -1,5 +1,5 @@
 FROM ubuntu:26.04
-# SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 ARG RUNNER_VERSION="2.337.0"
 
@@ -11,7 +11,7 @@ RUN useradd -m docker
 WORKDIR /home/docker/actions-runner
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
-    curl ca-certificates podman buildah git jq build-essential libssl-dev libffi-dev python3 python3-venv python3-dev python3-pip \
+    curl ca-certificates podman buildah fuse-overlayfs uidmap git jq build-essential libssl-dev libffi-dev python3 python3-venv python3-dev python3-pip \
     && rm -rf /var/lib/apt/lists
 
 # RUN <<EOF
@@ -41,8 +41,18 @@ RUN chown -R docker ~docker && /home/docker/actions-runner/bin/installdependenci
 COPY start.sh start.sh
 RUN chmod +x start.sh
 
+RUN echo "root:231072:65536" >> /etc/subuid && \
+    echo "root:231072:65536" >> /etc/subgid
+
 # since the config and run script for actions are not allowed to be run by root,
 # set the user to "docker" so all subsequent commands are run as the docker user
 USER docker
+
+# Use chroot because the default runc does not work when running rootless
+RUN echo "export BUILDAH_ISOLATION=chroot" >> /home/docker/.bashrc
+
+# Use VFS because fuse does not work
+RUN mkdir -p /home/docker/.config/containers \
+&& (echo '[storage]';echo 'driver = "vfs"') > /home/docker/.config/containers/storage.conf
 
 ENTRYPOINT ["/home/docker/actions-runner/start.sh"]
