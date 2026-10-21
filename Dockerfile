@@ -1,6 +1,7 @@
 FROM ubuntu:26.04
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
+# renovate: datasource=github-tags depName=actions/runner
 ARG RUNNER_VERSION="2.337.0"
 
 # Prevents installdependencies.sh from prompting the user and blocking the image creation
